@@ -1,4 +1,4 @@
-//This is the fisrt version of a decentralized share issuance with a multisig functionality.
+//This is the first version of a decentralized share issuance with a multisig functionality.
 
 //Name: Azam Razman
 //Date: 24 Dec 2016
@@ -6,11 +6,12 @@
 //Version: v1
 
 /*
-Intro: This is a contract for a propiatary share issuance on the Ethereum network. In this smart contract, we aim to have fuctionality of:
+Intro: This is a contract for a proprietary share issuance on the Ethereum network. In this smart contract, we aim to have functionality of:
 1. Share issuance, including more issuance in the future, i.e. not one time only.
-2. Multisig functionality, i.e. the issuer must be multiple entity, and need multiple private keys to have approval of share issuance.
-3. Additionally, any decision on the contract must have signiture of multiple entity as well.
-4. Only addresses approved will be able to recieve and send the tokens (only to other approved addresses).
+2. Multisig functionality, i.e. the issuer must be multiple entity, and need multiple private keys to have approval of share issuance (and additional share issuance).
+3. Additionally, any decision on the contract must have signature of multiple entity as well.
+4. Only addresses approved will be able to receive and send the tokens (only to other approved addresses).
+5. Authorized privatekey holders will be able to freeze transfer of shares of target addresses.
 ... (and many more to come)
 */
 
@@ -25,7 +26,7 @@ contract owned {
         owner = msg.sender;
     }
 
-    //Problem: Unfimiliar syntex... not sure whether it should be onlyOwner or onlyOwner()
+    //Problem: Unfamiliar syntax... not sure whether it should be onlyOwner or onlyOwner()
     modifier onlyOwner {
         if (msg.sender != owner) throw;
         _;
@@ -73,8 +74,42 @@ contract ShareIssue is owned {
     function () {
         throw;     // Prevents accidental sending of ether.
     }
+
+    //Allow regulators (and/or other authorized private key owners) to freeze moving of shares of target addresses.
+    //<start>
+
+    //This section does not make much sense on its own, please refer to the function transfer(address _to, uint256 _value)
+    mapping (address => bool) public frozenAccount;
+    event FrozenFunds(address target, bool frozen);
+
+    function freezeAccount(address target, bool freeze) onlyOwner {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
+    //<end>
+
+    function transfer(address _to, uint256 _value) {
+        if (balanceOf[msg.sender] < _value) {
+            throw;           // Check if the sender has enough
+        }
+
+        if (balanceOf[_to] + _value < balanceOf[_to]) {
+            throw; // Check for overflows
+        }
+
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+
+        //Important: Throw the transaction if the target account is frozen.
+        //Problem: Not sure whether this is the proper syntax. Maybe its just if(frozenAccount[msg.sender]) instead of if(frozenAccount[msg.sender] == true)
+        if (frozenAccount[msg.sender] == true) {
+            throw;
+        }
+    }  
 }
 
+/*********** Start: Reference Only *********** */
 pragma solidity ^0.4.2;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
@@ -150,3 +185,4 @@ contract MyToken {
         throw;     // Prevents accidental sending of ether
     }
 }
+/*********** End: Reference Only *********** */
