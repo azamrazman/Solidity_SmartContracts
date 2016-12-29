@@ -116,6 +116,9 @@ contract MyToken {
         Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
     }
 
+    //multisignature send
+    function multiSend() {}
+
     /* Allow another contract to spend some tokens in your behalf */
     function approve(address _spender, uint256 _value)
         returns (bool success) {
@@ -131,7 +134,7 @@ contract MyToken {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
             return true;
         }
-    }        
+    }
 
     /* A contract attempts to get the coins */
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
