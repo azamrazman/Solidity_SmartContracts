@@ -15,7 +15,7 @@ Intro: This is a contract for a proprietary share issuance on the Ethereum netwo
 ... (and many more to come)
 */
 
-pragma solidity ^0.4.7;
+pragma solidity ^0.4.6;
 
 //Inheritance allows a contract to acquire properties of a parent contract, without having to redefine all of them.
 //Problem: This is single owned, not multi-owned... fixes expected in the future.
@@ -49,6 +49,9 @@ contract ShareIssue is owned {
 	/* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
 
+    //Define the total supply of shares. 
+    uint256 public totalSupply;
+
     /* This generates a public event on the blockchain that will notify clients */
     //We can consider this as a "notification".
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -78,7 +81,7 @@ contract ShareIssue is owned {
     //Allow regulators (and/or other authorized private key owners) to freeze moving of shares of target addresses.
     //<start>
 
-    //This section does not make much sense on its own, please refer to the function transfer(address _to, uint256 _value)
+    //This section does not make much sense on its own, please refer to the function transfer(address _to, uint256 _value) for more details.
     mapping (address => bool) public frozenAccount;
     event FrozenFunds(address target, bool frozen);
 
@@ -106,11 +109,11 @@ contract ShareIssue is owned {
         if (frozenAccount[msg.sender] == true) {
             throw;
         }
-    }
+    }  
 }
 
 /*********** Start: Reference Only *********** */
-pragma solidity ^0.4.2;
+//pragma solidity ^0.4.7;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
 contract MyToken {
@@ -166,7 +169,7 @@ contract MyToken {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
             return true;
         }
-    }
+    }        
 
     /* A contract attempts to get the coins */
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
